@@ -1,7 +1,6 @@
 import { Button, List, Select } from "antd";
 import { getRoot, isValidReference } from "mobx-state-tree";
 import { observer } from "mobx-react";
-import { useState, useEffect } from "react";
 import { ArrowLeftOutlined, ArrowRightOutlined, DeleteOutlined, MoreOutlined, SwapOutlined } from "@ant-design/icons";
 
 import styles from "./Relations.module.scss";
@@ -77,13 +76,13 @@ const Relation = observer(({ rl }) => {
   );
 });
 
-const ListItem = observer(({ item, onSelect, selectedRelation }) => {
+const ListItem = observer(({ item }) => {
   const node = getRoot(item).annotationStore.selected.highlightedNode;
-  const isSelected = selectedRelation === item; // Check if this item is selected
+  const isSelected = node === item.node1 || node === item.node2;
 
   return (
     <List.Item
-      className={`${isSelected ? styles.selected : ""}`} // Highlight if selected
+      className={isSelected && styles.selected}
       key={item.id}
       actions={[]}
       onMouseEnter={() => {
@@ -94,7 +93,6 @@ const ListItem = observer(({ item, onSelect, selectedRelation }) => {
         item.toggleHighlight();
         item.setSelfHighlight(false);
       }}
-      onClick={() => onSelect(item)} // Handle item selection
     >
       <div className={styles.item}>
         <div>
@@ -139,27 +137,9 @@ const RelationsComponent = ({ store }) => {
   const hasRelations = relations.length > 0;
   const relationsUIVisible = annotation.relationStore.showConnections;
 
-  const [selectedRelation, setSelectedRelation] = useState(null); // State to track selected relation
-
-  // Handle deletion with the Delete key
-  const handleKeyDown = (event) => {
-    if (event.key === "Delete" && selectedRelation) {
-      selectedRelation.node1.setHighlight(false);
-      selectedRelation.node2.setHighlight(false);
-      selectedRelation.parent.deleteRelation(selectedRelation);
-      setSelectedRelation(null); // Clear the selection
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [selectedRelation]);
-
   return (
     <Block name="relations">
+      {/* override LS styles' height */}
       <Elem name="header">
         <Elem name="title">Relations ({relations.length})</Elem>
         {hasRelations && (
@@ -181,13 +161,7 @@ const RelationsComponent = ({ store }) => {
             itemLayout="vertical"
             className={styles.list}
             dataSource={annotation.relationStore.relations}
-            renderItem={(item) => (
-              <ListItem
-                item={item}
-                onSelect={setSelectedRelation} // Pass selection handler
-                selectedRelation={selectedRelation} // Pass selected relation
-              />
-            )}
+            renderItem={(item) => <ListItem item={item} />}
           />
         ) : (
           <p>No Relations added yet</p>
