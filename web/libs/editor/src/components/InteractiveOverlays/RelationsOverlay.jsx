@@ -30,7 +30,7 @@ const RelationItemRect = ({ x, y, width, height }) => {
   return <rect x={x} y={y} width={width} height={height} fill="none" />;
 };
 
-const RelationConnector = ({ id, command, color, direction, highlight }) => {
+const RelationConnector = ({ id, command, color, direction, highlight, onClick }) => {
   const pathColor = highlight ? "#fa541c" : color;
   const pathSettings = {
     d: command,
@@ -54,7 +54,14 @@ const RelationConnector = ({ id, command, color, direction, highlight }) => {
         <ArrowMarker id={id} color={pathColor} />
       </defs>
       {highlight && <path {...pathSettings} stroke={color} opacity={0.1} strokeWidth={6} />}
-      <path {...pathSettings} opacity={highlight ? 1 : 0.6} strokeWidth={2} {...markers} />
+      <path
+        {...pathSettings}
+        opacity={highlight ? 1 : 0.6}
+        strokeWidth={3}
+        {...markers}
+        onClick={onClick}
+        style={{ cursor: "pointer" , pointerEvents: "auto" }}
+      />
     </>
   );
 };
@@ -97,7 +104,7 @@ const RelationLabel = ({ label, position }) => {
   );
 };
 
-const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible }) => {
+const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible, onClick }) => {
   const root = rootRef.current;
   const nodesHidden = startNode.hidden === true || endNode.hidden === true;
   const hideConnection = nodesHidden || !visible;
@@ -119,7 +126,12 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
   }
 
   return (
-    <g id={id} className={itemStyles.join(" ")} visibility={hideConnection ? "hidden" : "visible"}>
+    <g id={id}
+       className={itemStyles.join(" ")}
+       visibility={hideConnection ? "hidden" : "visible"}
+       opacity={dimm ? 0.3 : 1}
+       onClick={() => onClick(id)}
+    >
       <RelationItemRect {...start} />
       <RelationItemRect {...end} />
       <RelationConnector
@@ -128,6 +140,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
         color={relation.color}
         direction={relation.direction}
         highlight={highlight}
+        onClick={onClick}
       />
       {relation.label && <RelationLabel label={relation.label} position={textPosition} />}
     </g>
@@ -140,7 +153,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
  * rootRef: React.RefObject<HTMLElement>
  * }}
  */
-const RelationItemObserver = observer(({ relation, startNode, endNode, visible, ...rest }) => {
+const RelationItemObserver = observer(({ relation, startNode, endNode, visible, onClick, ...rest }) => {
   const nodes = [
     startNode.getRegionElement ? startNode.getRegionElement() : startNode,
     endNode.getRegionElement ? endNode.getRegionElement() : endNode,
@@ -176,6 +189,7 @@ const RelationItemObserver = observer(({ relation, startNode, endNode, visible, 
       direction={relation.direction}
       visible={visibility}
       labels={relation.selectedValues}
+      onClick={onClick}
       {...rest}
     />
   ) : null;
@@ -188,7 +202,18 @@ class RelationsOverlay extends PureComponent {
   state = {
     shouldRender: false,
     shouldRenderConnections: Math.random(),
+    highlightedConnection: null,
   };
+
+  handleRelationClick = this.handleRelationClick.bind(this);
+
+  handleRelationClick(id) {
+    if (this.state.highlightedConnection === id) {
+      this.setState({ highlightedConnection: null });
+    } else {
+      this.setState({ highlightedConnection: id });
+    }
+  }
 
   componentDidUpdate() {
     if (this.rootNode.current && !this.state.shouldRender) {
@@ -238,7 +263,7 @@ class RelationsOverlay extends PureComponent {
 
   renderRelations(relations, visible, hasHighlight, highlightedRelation) {
     return relations.map((relation) => {
-      const highlighted = highlightedRelation === relation;
+      const highlighted = this.state.highlightedConnection === relation.id;
 
       return (
         <RelationItemObserver
@@ -251,6 +276,7 @@ class RelationsOverlay extends PureComponent {
           highlight={highlighted}
           visible={highlighted || visible}
           shouldUpdate={this.state.shouldRenderConnections}
+          onClick={this.handleRelationClick}
         />
       );
     });
