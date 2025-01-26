@@ -7,8 +7,9 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { FF_DEV_3391, isFF } from "../../utils/feature-flags";
 import { isDefined } from "../../utils/utilities";
 import NodesConnector from "./NodesConnector";
+import { Button } from "antd";
 
-const ArrowMarker = ({ id, color }) => {
+const ArrowMarker = ({ id, color, onClick }) => {
   return (
     <marker
       id={`arrow-${id}`}
@@ -19,7 +20,8 @@ const ArrowMarker = ({ id, color }) => {
       markerHeight={4}
       orient="auto-start-reverse"
     >
-      <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
+      <path d="M 0 0 L 10 5 L 0 10 z"
+        fill={color}/>
     </marker>
   );
 };
@@ -28,7 +30,7 @@ const RelationItemRect = ({ x, y, width, height }) => {
   return <rect x={x} y={y} width={width} height={height} fill="none" />;
 };
 
-const RelationConnector = ({ id, command, color, direction, highlight }) => {
+const RelationConnector = ({ id, command, color, direction, highlight, onClick }) => {
   const pathColor = highlight ? "#fa541c" : color;
   const pathSettings = {
     d: command,
@@ -49,10 +51,17 @@ const RelationConnector = ({ id, command, color, direction, highlight }) => {
   return (
     <>
       <defs>
-        <ArrowMarker id={id} color={pathColor} />
+        <ArrowMarker id={id} color={pathColor} onClick={onClick}/>
       </defs>
       {highlight && <path {...pathSettings} stroke={color} opacity={0.1} strokeWidth={6} />}
-      <path {...pathSettings} opacity={highlight ? 1 : 0.6} strokeWidth={2} {...markers} />
+      <path
+        {...pathSettings}
+        opacity={highlight ? 1 : 0.6}
+        strokeWidth={3}
+        {...markers}
+        onClick={onClick}
+        style={{ cursor: "pointer", pointerEvents: "auto" }}
+      />
     </>
   );
 };
@@ -95,7 +104,7 @@ const RelationLabel = ({ label, position }) => {
   );
 };
 
-const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible }) => {
+const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible, onClick }) => {
   const root = rootRef.current;
   const nodesHidden = startNode.hidden === true || endNode.hidden === true;
   const hideConnection = nodesHidden || !visible;
@@ -111,7 +120,10 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
   }, []);
   if (start.width < 1 || start.height < 1 || end.width < 1 || end.height < 1) return null;
   return (
-    <g opacity={dimm && !highlight ? 0.5 : 1} visibility={hideConnection ? "hidden" : "visible"}>
+    <g opacity={dimm && !highlight ? 0.5 : 1}
+       visibility={hideConnection ? "hidden" : "visible"}
+       onClick={() => onClick(id)}
+    >
       <RelationItemRect {...start} />
       <RelationItemRect {...end} />
       <RelationConnector
@@ -120,6 +132,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
         color={relation.color}
         direction={relation.direction}
         highlight={highlight}
+        onClick={onClick}
       />
       {relation.label && <RelationLabel label={relation.label} position={textPosition} />}
     </g>
@@ -132,7 +145,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
  * rootRef: React.RefObject<HTMLElement>
  * }}
  */
-const RelationItemObserver = observer(({ relation, startNode, endNode, visible, ...rest }) => {
+const RelationItemObserver = observer(({ relation, startNode, endNode, visible, onClick, ...rest }) => {
   const nodes = [
     startNode.getRegionElement ? startNode.getRegionElement() : startNode,
     endNode.getRegionElement ? endNode.getRegionElement() : endNode,
@@ -168,6 +181,7 @@ const RelationItemObserver = observer(({ relation, startNode, endNode, visible, 
       direction={relation.direction}
       visible={visibility}
       labels={relation.selectedValues}
+      onClick={onClick}
       {...rest}
     />
   ) : null;
@@ -180,7 +194,26 @@ class RelationsOverlay extends PureComponent {
   state = {
     shouldRender: false,
     shouldRenderConnections: Math.random(),
+    highlightedConnection: null,
   };
+
+  handleRelationClick = this.handleRelationClick.bind(this);
+
+  handleRelationClick(id) {
+    if (this.state.highlightedConnection === id) {
+      console.log("if vetva click")
+      this.setState({ highlightedConnection: null });
+      if (this.props.relationStore.findRelationById(id)) {
+        console.log("nasiel som v if vetve")
+      }
+    } else {
+      console.log("else vetva click")
+      this.setState({ highlightedConnection: id });
+      if (this.props.relationStore.findRelationById(id)) {
+        console.log("nasiel som v else vetve")
+      }
+    }
+  }
 
   componentDidUpdate() {
     if (this.rootNode.current && !this.state.shouldRender) {
@@ -216,7 +249,7 @@ class RelationsOverlay extends PureComponent {
 
   renderRelations(relations, visible, hasHighlight, highlightedRelation) {
     return relations.map((relation) => {
-      const highlighted = highlightedRelation === relation;
+      const highlighted = this.state.highlightedConnection === relation.id;
 
       return (
         <RelationItemObserver
@@ -229,8 +262,9 @@ class RelationsOverlay extends PureComponent {
           highlight={highlighted}
           visible={highlighted || visible}
           shouldUpdate={this.state.shouldRenderConnections}
+          onClick={this.handleRelationClick}
         />
-      );
+      );  
     });
   }
 
@@ -242,7 +276,7 @@ class RelationsOverlay extends PureComponent {
 const RelationObserverView = observer(RelationsOverlay);
 
 const RelationsOverlayObserver = observer(
-  forwardRef(({ store, tags }, ref) => {
+  forwardRef(({ store, tags, relationStore }, ref) => {
     const { relations, showConnections, highlighted } = store;
 
     return (
@@ -252,6 +286,7 @@ const RelationsOverlayObserver = observer(
         visible={showConnections}
         highlighted={highlighted}
         tags={Array.from(tags?.values?.() ?? [])}
+        relationStore={relationStore}
       />
     );
   }),
@@ -287,7 +322,7 @@ const checkTagsAreReady = (tags, callback) => {
  * @see {@link CommentsOverlay}
  */
 const EnsureTagsReady = observer(
-  forwardRef(({ tags, taskData, ...props }, ref) => {
+  forwardRef(({ tags, taskData, relationStore, ...props }, ref) => {
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
@@ -298,7 +333,7 @@ const EnsureTagsReady = observer(
       return () => clearTimeout(readinessTimer);
     }, [taskData, tags]);
 
-    return ready && <RelationsOverlayObserver ref={ref} {...props} />;
+    return ready && <RelationsOverlayObserver ref={ref} relationStore={relationStore} {...props} />;
   }),
 );
 
