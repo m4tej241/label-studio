@@ -76,7 +76,7 @@ const Relation = observer(({ rl }) => {
   );
 });
 
-const ListItem = observer(({ item }) => {
+const ListItem = observer(({ item, highlightedRelationId, onRelationClick }) => {
   const node = getRoot(item).annotationStore.selected.highlightedNode;
   const isSelected = node === item.node1 || node === item.node2;
 
@@ -93,6 +93,7 @@ const ListItem = observer(({ item }) => {
         item.toggleHighlight();
         item.setSelfHighlight(false);
       }}
+      onClick={() => onRelationClick(item.id)}
     >
       <div className={styles.item}>
         <div>
@@ -136,6 +137,11 @@ const RelationsComponent = ({ store }) => {
   const { relations } = annotation.relationStore;
   const hasRelations = relations.length > 0;
   const relationsUIVisible = annotation.relationStore.showConnections;
+  const [highlightedRelationId, setHighlightedRelationId] = useState<string | null>(null);
+
+  const handleRelationClick = (id) => {
+    setHighlightedRelationId(id);
+  };
 
   return (
     <Block name="relations">
@@ -161,7 +167,7 @@ const RelationsComponent = ({ store }) => {
             itemLayout="vertical"
             className={styles.list}
             dataSource={annotation.relationStore.relations}
-            renderItem={(item) => <ListItem item={item} />}
+            renderItem={(item) => <ListItem item={item} highlightedRelationId={highlightedRelationId} onRelationClick={handleRelationClick} />}
           />
         ) : (
           <p>No Relations added yet</p>

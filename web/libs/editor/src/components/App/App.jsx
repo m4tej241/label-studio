@@ -83,6 +83,13 @@ class App extends Component {
     );
   }
 
+  handleRelationClick = (id) => {
+    const { store } = this.props;
+    const selectedStore = store.annotationStore.selected;
+    selectedStore.relationStore.setHighlight({ id });
+    this.setState({ highlightedRelationId: id });
+  };
+
   renderNoAnnotation() {
     return (
       <Block name="editor">
@@ -202,6 +209,7 @@ class App extends Component {
         ref={this.relationsRef}
         tags={selectedStore.names}
         taskData={taskData}
+        onRelationClick={this.handleRelationClick}
       />
     );
   }

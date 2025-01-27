@@ -213,6 +213,7 @@ class RelationsOverlay extends PureComponent {
     } else {
       this.setState({ highlightedConnection: id });
     }
+    this.props.onRelationClick(id);
   }
 
   componentDidUpdate() {
@@ -290,7 +291,7 @@ class RelationsOverlay extends PureComponent {
 const RelationObserverView = observer(RelationsOverlay);
 
 const RelationsOverlayObserver = observer(
-  forwardRef(({ store, tags }, ref) => {
+  forwardRef(({ store, tags, onRelationClick }, ref) => {
     const { relations, showConnections, highlighted } = store;
 
     return (
@@ -300,6 +301,7 @@ const RelationsOverlayObserver = observer(
         visible={showConnections}
         highlighted={highlighted}
         tags={Array.from(tags?.values?.() ?? [])}
+        onRelationClick={onRelationClick}
       />
     );
   }),
@@ -335,7 +337,7 @@ const checkTagsAreReady = (tags, callback) => {
  * @see {@link CommentsOverlay}
  */
 const EnsureTagsReady = observer(
-  forwardRef(({ tags, taskData, ...props }, ref) => {
+  forwardRef(({ tags, taskData, onRelationClick, ...props }, ref) => {
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
@@ -346,7 +348,7 @@ const EnsureTagsReady = observer(
       return () => clearTimeout(readinessTimer);
     }, [taskData, tags]);
 
-    return ready && <RelationsOverlayObserver ref={ref} {...props} />;
+    return ready && <RelationsOverlayObserver ref={ref} onRelationClick={onRelationClick} {...props} />;
   }),
 );
 
