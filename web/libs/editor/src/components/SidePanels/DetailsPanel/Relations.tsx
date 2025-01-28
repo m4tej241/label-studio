@@ -10,30 +10,37 @@ import { Select } from "antd";
 import "./Relations.scss";
 
 const RealtionsComponent: FC<any> = ({ relationStore }) => {
+  const [highlightedRelationId, setHighlightedRelationId] = useState<string | null>(null);
   const relations = relationStore.orderedRelations;
+
+  const handleRelationClick = (id: string) => {
+    setHighlightedRelationId((prevId) => (prevId === id ? null : id));
+  };
 
   return (
     <Block name="relations">
-      <RelationsList relations={relations} />
+      <RelationsList relations={relations} highlightedRelationId={highlightedRelationId} onRelationClick={handleRelationClick} />
     </Block>
   );
 };
 
 interface RelationsListProps {
   relations: any[];
+  highlightedRelationId: string | null;
+  onRelationClick: (id: string) => void;
 }
 
-const RelationsList: FC<RelationsListProps> = observer(({ relations }) => {
+const RelationsList: FC<RelationsListProps> = observer(({ relations, highlightedRelationId, onRelationClick }) => {
   return (
     <>
       {relations.map((rel, i) => {
-        return <RelationItem key={i} relation={rel} />;
+        return <RelationItem key={i} relation={rel} isHighlighted={rel.id === highlightedRelationId} onClick={() => onRelationClick(rel.id)} />;
       })}
     </>
   );
 });
 
-const RelationItem: FC<{ relation: any }> = observer(({ relation }) => {
+const RelationItem: FC<{ relation: any, isHighlighted: boolean, onClick: () => void }> = observer(({ relation, isHighlighted, onClick }) => {
   const [hovered, setHovered] = useState(false);
 
   const onMouseEnter = useCallback(() => {
@@ -70,7 +77,7 @@ const RelationItem: FC<{ relation: any }> = observer(({ relation }) => {
   // const;
 
   return (
-    <Elem name="item" mod={{ hidden: !relation.visible }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <Elem name="item" mod={{ hidden: !relation.visible, highlighted: isHighlighted }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} >
       <Elem name="content">
         <Elem name="icon" onClick={relation.rotateDirection}>
           <Elem name="direction">{directionIcon}</Elem>

@@ -129,7 +129,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
     <g id={id}
        className={itemStyles.join(" ")}
        visibility={hideConnection ? "hidden" : "visible"}
-       opacity={dimm ? 0.3 : 1}
+       opacity={dimm ? 1 : 0.3}
        onClick={() => onClick(id)}
     >
       <RelationItemRect {...start} />
@@ -202,17 +202,11 @@ class RelationsOverlay extends PureComponent {
   state = {
     shouldRender: false,
     shouldRenderConnections: Math.random(),
-    highlightedConnection: null,
   };
 
   handleRelationClick = this.handleRelationClick.bind(this);
 
   handleRelationClick(id) {
-    if (this.state.highlightedConnection === id) {
-      this.setState({ highlightedConnection: null });
-    } else {
-      this.setState({ highlightedConnection: id });
-    }
     this.props.onRelationClick(id);
   }
 
@@ -264,7 +258,7 @@ class RelationsOverlay extends PureComponent {
 
   renderRelations(relations, visible, hasHighlight, highlightedRelation) {
     return relations.map((relation) => {
-      const highlighted = this.state.highlightedConnection === relation.id;
+      const highlighted = relation.id === highlightedRelation;
 
       return (
         <RelationItemObserver

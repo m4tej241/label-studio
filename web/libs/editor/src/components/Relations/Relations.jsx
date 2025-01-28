@@ -139,8 +139,14 @@ const RelationsComponent = ({ store }) => {
   const relationsUIVisible = annotation.relationStore.showConnections;
   const [highlightedRelationId, setHighlightedRelationId] = useState<string | null>(null);
 
+  const currentHighlight = annotation.relationStore._highlighted;
+
   const handleRelationClick = (id) => {
-    setHighlightedRelationId(id);
+    if (currentHighlight === id) {
+      selectedStore.relationStore.removeHighlight();
+    } else {
+      selectedStore.relationStore.setHighlight({ id });
+    }
   };
 
   return (

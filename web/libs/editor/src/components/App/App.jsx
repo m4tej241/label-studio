@@ -86,8 +86,13 @@ class App extends Component {
   handleRelationClick = (id) => {
     const { store } = this.props;
     const selectedStore = store.annotationStore.selected;
-    selectedStore.relationStore.setHighlight({ id });
-    this.setState({ highlightedRelationId: id });
+    const currentHighlight = selectedStore.relationStore._highlighted;
+
+    if (currentHighlight === id) {
+      selectedStore.relationStore.removeHighlight();
+    } else {
+      selectedStore.relationStore.setHighlight({ id });
+    }
   };
 
   renderNoAnnotation() {
