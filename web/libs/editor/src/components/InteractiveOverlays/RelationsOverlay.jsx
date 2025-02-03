@@ -57,9 +57,9 @@ const RelationConnector = ({ id, command, color, direction, highlight, onClick }
       <path
         {...pathSettings}
         opacity={highlight ? 1 : 0.6}
-        strokeWidth={3}
+        strokeWidth={4}
         {...markers}
-        onClick={onClick}
+        onClick={() => onClick(id)}
         style={{ cursor: "pointer" , pointerEvents: "auto" }}
       />
     </>
@@ -129,8 +129,7 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
     <g id={id}
        className={itemStyles.join(" ")}
        visibility={hideConnection ? "hidden" : "visible"}
-       opacity={dimm ? 1 : 0.3}
-       onClick={() => onClick(id)}
+       opacity={dimm ? 0.3 : 1}
     >
       <RelationItemRect {...start} />
       <RelationItemRect {...end} />
@@ -248,7 +247,15 @@ class RelationsOverlay extends PureComponent {
             {this.state.shouldRender && this.renderRelations(relations, visible, hasHighlight, highlighted)}
             {
               // moving a highlighted relation into the foreground
-              highlighted ? <use xlinkHref={`#${highlighted.id}`} /> : null
+              // highlighted ? <use xlinkHref={`#${highlighted.id}`} style={{ pointerEvents: "auto" }}/> : null
+              highlighted ? (
+                <use
+                  xlinkHref={`#${highlighted.id}`}
+                  onClick={() => this.handleRelationClick(highlighted.id)}
+                  style={{ pointerEvents: "auto", cursor: "pointer" }}
+                />
+              ) : null
+              
             }
           </svg>
         )}

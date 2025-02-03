@@ -252,6 +252,10 @@ const RelationStore = types
     removeHighlight() {
       self._highlighted = null;
     },
+
+    getRelationById(id) {
+      return self.relations.find((relation) => relation.id === id) || null;
+    },
   }));
 
 export default RelationStore;
