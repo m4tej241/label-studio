@@ -56,7 +56,7 @@ const RelationConnector = ({ id, command, color, direction, highlight, onClick }
       {highlight && <path {...pathSettings} stroke={color} opacity={0.1} strokeWidth={6} />}
       <path
         {...pathSettings}
-        opacity={highlight ? 1 : 0.6}
+        opacity={highlight ? 1 : 0.5}
         strokeWidth={4}
         {...markers}
         onClick={() => onClick(id)}

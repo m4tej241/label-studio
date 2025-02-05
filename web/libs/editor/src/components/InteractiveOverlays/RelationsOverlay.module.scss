@@ -3,13 +3,13 @@
     transition: opacity 300ms;
   }
 
-  &._highlighting {
-    & .relationItem {
-      opacity: 0.2;
+  // &._highlighting {
+  //   & .relationItem {
+  //     opacity: 0.2;
 
-      &._highlighted {
-        opacity: 1;
-      }
-    }
-  }
+  //     &._highlighted {
+  //       opacity: 1;
+  //     }
+  //   }
+  // }
 }
