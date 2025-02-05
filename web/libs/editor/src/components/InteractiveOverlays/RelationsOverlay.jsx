@@ -129,7 +129,6 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
     <g id={id}
        className={itemStyles.join(" ")}
        visibility={hideConnection ? "hidden" : "visible"}
-       opacity={dimm ? 0.3 : 1}
     >
       <RelationItemRect {...start} />
       <RelationItemRect {...end} />
