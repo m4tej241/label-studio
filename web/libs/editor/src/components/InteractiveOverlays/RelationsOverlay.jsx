@@ -9,6 +9,7 @@ import { isDefined } from "../../utils/utilities";
 import NodesConnector from "./NodesConnector";
 
 import styles from "./RelationsOverlay.module.scss";
+import { hi } from "date-fns/locale";
 
 const ArrowMarker = ({ id, color }) => {
   return (
@@ -207,6 +208,27 @@ class RelationsOverlay extends PureComponent {
   handleRelationClick(id) {
     this.props.onRelationClick(id);
   }
+
+  handleKeyDown = (event) => {
+    const { highlighted, relations } = this.props;
+    console.log("key pressed");
+    if (event.key === "Delete" && highlighted) {
+      const relation = highlighted;
+      if (relation) {
+        relation.node1.setHighlight(false);
+        relation.node2.setHighlight(false);
+        relation.parent.deleteRelation(relation);
+      }
+    }
+  };
+
+  componentDidMount() {
+    document.addEventListener("keydown", this.handleKeyDown);
+  }
+
+  // componentWillUnmount() {
+  //   document.removeEventListener("keydown", this.handleKeyDown);
+  // }
 
   componentDidUpdate() {
     if (this.rootNode.current && !this.state.shouldRender) {
