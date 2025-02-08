@@ -116,9 +116,21 @@ const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, d
   const [path, textPosition] = NodesConnector.calculatePath(start, end);
 
   useEffect(() => {
-    relation.onChange(() => forceUpdate({}));
-    return () => relation.destroy();
+    let isMounted = true;
+    // Register the change callback and guard forceUpdate
+    relation.onChange(() => {
+      if (isMounted) {
+        forceUpdate({});
+      }
+    });
+    // Cleanup: mark unmounted and destroy the relation
+    return () => {
+      isMounted = false;
+      relation.destroy();
+    };
   }, []);
+  
+
   if (start.width < 1 || start.height < 1 || end.width < 1 || end.height < 1) return null;
 
   const itemStyles = [styles.relationItem];
@@ -162,8 +174,11 @@ const RelationItemObserver = observer(({ relation, startNode, endNode, visible, 
 
   useEffect(() => {
     let timer;
+    let isMounted = true;
 
     const watchRegionAppear = () => {
+      if (!isMounted) return;
+
       const nodesExist = isDefined(nodes[0]) && isDefined(nodes[1]);
 
       if (render !== nodesExist) {
@@ -175,7 +190,10 @@ const RelationItemObserver = observer(({ relation, startNode, endNode, visible, 
 
     timer = setTimeout(watchRegionAppear, 30);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [nodes, render]);
 
   const visibility = visible && relation.visible;
@@ -213,12 +231,9 @@ class RelationsOverlay extends PureComponent {
     const { highlighted, relations } = this.props;
     console.log("key pressed");
     if (event.key === "Delete" && highlighted) {
-      const relation = highlighted;
-      if (relation) {
-        relation.node1.setHighlight(false);
-        relation.node2.setHighlight(false);
-        relation.parent.deleteRelation(relation);
-      }
+      highlighted.node1.setHighlight(false);
+      highlighted.node2.setHighlight(false);
+      highlighted.parent.deleteRelation(highlighted);
     }
   };
 
@@ -226,9 +241,9 @@ class RelationsOverlay extends PureComponent {
     document.addEventListener("keydown", this.handleKeyDown);
   }
 
-  // componentWillUnmount() {
-  //   document.removeEventListener("keydown", this.handleKeyDown);
-  // }
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleKeyDown);
+  }
 
   componentDidUpdate() {
     if (this.rootNode.current && !this.state.shouldRender) {
