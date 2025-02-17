@@ -230,7 +230,7 @@ class RelationsOverlay extends PureComponent {
   handleKeyDown = (event) => {
     const { highlighted, relations } = this.props;
     console.log("key pressed");
-    if (event.key === "Delete" && highlighted) {
+    if (event.key === "Backspace" && highlighted) {
       highlighted.node1.setHighlight(false);
       highlighted.node2.setHighlight(false);
       highlighted.parent.deleteRelation(highlighted);
