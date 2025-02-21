@@ -1,6 +1,6 @@
 {
-  "message": "fix: OPTIC-1608: Seeking video frame by frame sometimes produces duplicated or skipped frames visually (#7027)",
-  "commit": "5093b7f98105a32c4bd22dfac8478de8d58bca47",
-  "date": "2025-02-10T13:55:46.000Z",
+  "message": "fix: OPTIC-1709: Ensure checks for feature flag enablement are done correctly (#7121)",
+  "commit": "459ffbf8e7a133c938453ae21b689dd28280b5ea",
+  "date": "2025-02-20T22:35:54.000Z",
   "branch": "develop"
 }
