@@ -103,8 +103,21 @@ const calculateBBox = (shape, root) => {
   });
 };
 
-const getNodesBBox = ({ start, end, root }) => {
+const calculateOffset = (index, total, offsetDistance = 7) => {
+  const middle = Math.floor(total / 2);
+  const offset = (index - middle) * offsetDistance;
+  return offset;
+};
+
+
+const getNodesBBox = ({ start, end, root, index, total }) => {
+  const offset = calculateOffset(index, total);
   const [startBBox, endBBox] = Geometry.closestRects(calculateBBox(start, root), calculateBBox(end, root));
+  console.log("startBBox", startBBox.width);
+  const wordLength = startBBox.width;
+  // const offset = calculateOffset(index, total, wordLength);
+  // startBBox.x += offset;
+  // endBBox.y += offset;
 
   return {
     start: startBBox,
@@ -121,7 +134,7 @@ const shapesIntersect = ({ x1, y1, w1, x2, y2, w2 }) => {
   return leftIntersection || rightIntersection;
 };
 
-const calculateTopPath = ({ x1, y1, w1, x2, y2, w2, limit }) => {
+const calculateTopPath = ({ x1, y1, w1, x2, y2, w2, limit, index, total }) => {
   const xw1 = x1 + w1 * 0.5;
   const xw2 = x2 + w2 * 0.5;
 
@@ -130,11 +143,17 @@ const calculateTopPath = ({ x1, y1, w1, x2, y2, w2, limit }) => {
   const l2 = Math.min(top, y2 - limit);
 
   const toEnd = xw1 < xw2;
+  // Calculate the offset
+  const offset = calculateOffset(index, total);
 
-  return { x1: xw1, x2: xw2, y1, y2, l1, l2, toEnd };
+  // Apply the offset to l1 and l2
+  const l1WithOffset = l1 + offset;
+  const l2WithOffset = l2 + offset;
+
+  return { x1: xw1, x2: xw2, y1, y2, l1: l1WithOffset, l2: l2WithOffset, toEnd };
 };
 
-const calculateSidePath = ({ x1, y1, w1, h1, x2, y2, w2, h2, limit }) => {
+const calculateSidePath = ({ x1, y1, w1, h1, x2, y2, w2, h2, limit, index, total }) => {
   let renderingSide = "left";
 
   if (Math.min(x1, x2) - limit < 0) {
@@ -253,7 +272,7 @@ const buildPathCommand = ({ x1, y1, x2, y2, l1, l2, toEnd, renderingSide }, orie
   return [pathCommand.join(" "), [ex, ey]];
 };
 
-const calculatePath = (start, end) => {
+const calculatePath = (start, end, index, total) => {
   const { x: x1, y: y1, width: w1, height: h1 } = start;
   const { x: x2, y: y2, width: w2, height: h2 } = end;
 
@@ -279,6 +298,8 @@ const calculatePath = (start, end) => {
     w2,
     h2,
     limit,
+    index,
+    total,
   });
 
   const pathCommand = buildPathCommand(coordinates, intersecting ? "horizontal" : "vertical");

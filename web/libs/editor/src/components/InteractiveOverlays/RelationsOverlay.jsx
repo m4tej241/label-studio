@@ -58,7 +58,7 @@ const RelationConnector = ({ id, command, color, direction, highlight, onClick }
       <path
         {...pathSettings}
         opacity={highlight ? 1 : 0.5}
-        strokeWidth={4}
+        strokeWidth={3}
         {...markers}
         onClick={() => onClick(id)}
         style={{ cursor: "pointer" , pointerEvents: "auto" }}
@@ -105,15 +105,15 @@ const RelationLabel = ({ label, position }) => {
   );
 };
 
-const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible, onClick }) => {
+const RelationItem = ({ id, startNode, endNode, direction, rootRef, highlight, dimm, labels, visible, onClick, index, total }) => {
   const root = rootRef.current;
   const nodesHidden = startNode.hidden === true || endNode.hidden === true;
   const hideConnection = nodesHidden || !visible;
   const [, forceUpdate] = useState();
 
   const relation = NodesConnector.connect({ id, startNode, endNode, direction, labels }, root);
-  const { start, end } = NodesConnector.getNodesBBox({ root, ...relation });
-  const [path, textPosition] = NodesConnector.calculatePath(start, end);
+  const { start, end } = NodesConnector.getNodesBBox({ root, ...relation, index, total });
+  const [path, textPosition] = NodesConnector.calculatePath(start, end, index, total);
 
   useEffect(() => {
     let isMounted = true;
@@ -300,7 +300,8 @@ class RelationsOverlay extends PureComponent {
   }
 
   renderRelations(relations, visible, hasHighlight, highlightedRelation) {
-    return relations.map((relation) => {
+    const total = relations.length;
+    return relations.map((relation, index) => {
       const highlighted = relation.id === highlightedRelation;
 
       return (
@@ -315,6 +316,8 @@ class RelationsOverlay extends PureComponent {
           visible={highlighted || visible}
           shouldUpdate={this.state.shouldRenderConnections}
           onClick={this.handleRelationClick}
+          index={index}
+          total={total}
         />
       );
     });
