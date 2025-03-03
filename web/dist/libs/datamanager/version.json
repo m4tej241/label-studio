@@ -1,6 +1,6 @@
 {
-  "message": "fix: OPTIC-1709: Ensure checks for feature flag enablement are done correctly (#7121)",
-  "commit": "459ffbf8e7a133c938453ae21b689dd28280b5ea",
-  "date": "2025-02-20T22:35:54.000Z",
+  "message": "chore: LEAP-1293: Remove fflag_feat_back_lsdv_5035_use_created_at_fro… (#7135)",
+  "commit": "5a180200585ac61e43e3e9b3aa19ed5512783bfc",
+  "date": "2025-02-27T14:35:14.000Z",
   "branch": "develop"
 }
