@@ -103,9 +103,10 @@ const calculateBBox = (shape, root) => {
   });
 };
 
-const calculateOffset = (index, total, offsetDistance = 7) => {
-  const middle = Math.floor(total / 2);
-  const offset = (index - middle) * offsetDistance;
+const calculateOffset = (index, total, offsetDistance = 5) => {
+  // const middle = Math.floor(total / 2);
+  // const offset = (index - middle) * offsetDistance;
+  const offset = ( index + 1 ) * offsetDistance;
   return offset;
 };
 
@@ -113,7 +114,6 @@ const calculateOffset = (index, total, offsetDistance = 7) => {
 const getNodesBBox = ({ start, end, root, index, total }) => {
   const offset = calculateOffset(index, total);
   const [startBBox, endBBox] = Geometry.closestRects(calculateBBox(start, root), calculateBBox(end, root));
-  console.log("startBBox", startBBox.width);
   const wordLength = startBBox.width;
   // const offset = calculateOffset(index, total, wordLength);
   // startBBox.x += offset;
@@ -144,7 +144,9 @@ const calculateTopPath = ({ x1, y1, w1, x2, y2, w2, limit, index, total }) => {
 
   const toEnd = xw1 < xw2;
   // Calculate the offset
-  const offset = calculateOffset(index, total);
+  const offset = -calculateOffset(index, total)
+  // const offset = Math.min(-calculateOffset(index, total), 5)
+  console.log("offset ", offset);
 
   // Apply the offset to l1 and l2
   const l1WithOffset = l1 + offset;
@@ -287,7 +289,12 @@ const calculatePath = (start, end, index, total) => {
     w2,
   });
 
+  if (intersecting) {
+    console.log("Intersecting");
+  }
+
   const coordinatesCalculator = intersecting ? calculateSidePath : calculateTopPath;
+  // const coordinatesCalculator = calculateTopPath;
   const coordinates = coordinatesCalculator({
     x1,
     y1,
