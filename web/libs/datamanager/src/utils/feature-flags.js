@@ -43,11 +43,6 @@ export const FF_LSDV_4620_3_ML = "fflag_fix_front_lsdv_4620_memory_leaks_100723_
 export const FF_LSDV_4711 = "fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short";
 
 /**
- * Allow the ability to filter annotations by their original created_at timestamp
- */
-export const FF_LSDV_5035 = "fflag_feat_back_lsdv_5035_use_created_at_from_draft_for_annotation_256052023_short";
-
-/**
  * Updated UX with improved accessibility
  */
 export const FF_LOPS_E_10 = "fflag_feat_front_lops_e_10_updated_ux_short";
@@ -72,6 +67,11 @@ export const FF_SELF_SERVE = "fflag_feat_front_leap_482_self_serve_short";
 export const FF_GRID_PREVIEW = "fflag_feat_front_leap_1424_grid_preview_short";
 
 export const FF_MEMORY_LEAK_FIX = "fflag_feat_all_optic_1178_reduce_memory_leak_short";
+
+/**
+ * Add ability to show specific region from URL params (by hiding all other regions).
+ */
+export const FF_REGION_VISIBILITY_FROM_URL = "fflag_feat_front_optic_1553_url_based_region_visibility_short";
 
 // Customize flags
 const flags = {};

@@ -524,34 +524,42 @@ class Project(ProjectMixin, models.Model):
         if not hasattr(self, 'summary'):
             return
 
-        if self.num_tasks == 0:
-            logger.debug(f'Project {self} has no tasks: nothing to validate here. Ensure project summary is empty')
-            self.summary.reset()
-            return
+        with transaction.atomic():
+            # Lock summary for update to avoid race conditions
+            summary = ProjectSummary.objects.select_for_update().get(project=self)
 
-        # validate data columns consistency
-        fields_from_config = get_all_object_tag_names(config_string)
-        if not fields_from_config:
-            logger.debug('Data fields not found in labeling config')
-            return
+            if self.num_tasks == 0:
+                logger.debug(f'Project {self} has no tasks: nothing to validate here. Ensure project summary is empty')
+                logger.info(f'calling reset project_id={self.id} validate_config() num_tasks={self.num_tasks}')
+                summary.reset()
+                return
 
-        # TODO: DEV-2939 Add validation for fields addition in label config
-        """fields_from_config = {field.split('[')[0] for field in fields_from_config}  # Repeater tag support
-        fields_from_data = set(self.summary.common_data_columns)
-        fields_from_data.discard(settings.DATA_UNDEFINED_NAME)
-        if fields_from_data and not fields_from_config.issubset(fields_from_data):
-            different_fields = list(fields_from_config.difference(fields_from_data))
-            raise LabelStudioValidationErrorSentryIgnored(
-                f'These fields are not present in the data: {",".join(different_fields)}'
-            )"""
+            # validate data columns consistency
+            fields_from_config = get_all_object_tag_names(config_string)
+            if not fields_from_config:
+                logger.debug('Data fields not found in labeling config')
+                return
 
-        if self.num_annotations == 0 and self.num_drafts == 0:
-            logger.debug(
-                f'Project {self} has no annotations and drafts: nothing to validate here. '
-                f'Ensure annotations-related project summary is empty'
-            )
-            self.summary.reset(tasks_data_based=False)
-            return
+            # TODO: DEV-2939 Add validation for fields addition in label config
+            """fields_from_config = {field.split('[')[0] for field in fields_from_config}  # Repeater tag support
+            fields_from_data = set(self.summary.common_data_columns)
+            fields_from_data.discard(settings.DATA_UNDEFINED_NAME)
+            if fields_from_data and not fields_from_config.issubset(fields_from_data):
+                different_fields = list(fields_from_config.difference(fields_from_data))
+                raise LabelStudioValidationErrorSentryIgnored(
+                    f'These fields are not present in the data: {",".join(different_fields)}'
+                )"""
+
+            if self.num_annotations == 0 and self.num_drafts == 0:
+                logger.debug(
+                    f'Project {self} has no annotations and drafts: nothing to validate here. '
+                    f'Ensure annotations-related project summary is empty'
+                )
+                logger.info(
+                    f'calling reset project_id={self.id} validate_config() num_annotations={self.num_annotations} num_drafts={self.num_drafts}'
+                )
+                summary.reset(tasks_data_based=False)
+                return
 
         # validate annotations consistency
         annotations_from_config = set(get_all_control_tag_tuples(config_string))
@@ -778,11 +786,18 @@ class Project(ProjectMixin, models.Model):
             )
 
         if hasattr(self, 'summary'):
-            # Ensure project.summary is consistent with current tasks / annotations
-            if self.num_tasks == 0:
-                self.summary.reset()
-            elif self.num_annotations == 0 and self.num_drafts == 0:
-                self.summary.reset(tasks_data_based=False)
+            with transaction.atomic():
+                # Lock summary for update to avoid race conditions
+                summary = ProjectSummary.objects.select_for_update().get(project=self)
+                # Ensure project.summary is consistent with current tasks / annotations
+                if self.num_tasks == 0:
+                    logger.info(f'calling reset project_id={self.id} Project.save() num_tasks={self.num_tasks}')
+                    summary.reset()
+                elif self.num_annotations == 0 and self.num_drafts == 0:
+                    logger.info(
+                        f'calling reset project_id={self.id} Project.save() num_annotations={self.num_annotations} num_drafts={self.num_drafts}'
+                    )
+                    summary.reset(tasks_data_based=False)
 
     def get_member_ids(self):
         if hasattr(self, 'team_link'):
@@ -1165,6 +1180,11 @@ class ProjectSummary(models.Model):
         return self.project.has_permission(user)
 
     def reset(self, tasks_data_based=True):
+        import traceback
+
+        logger.info(
+            f'reset summary project_id={self.project_id} {tasks_data_based=} {self.all_data_columns=} {traceback.format_stack(limit=4)=}'
+        )
         if tasks_data_based:
             self.all_data_columns = {}
             self.common_data_columns = []
@@ -1194,8 +1214,8 @@ class ProjectSummary(models.Model):
             self.common_data_columns = list(sorted(common_data_columns))
         else:
             self.common_data_columns = list(sorted(set(self.common_data_columns) & common_data_columns))
-        logger.info(f'update summary.all_data_columns = {self.all_data_columns} project_id={self.project_id}')
-        logger.info(f'update summary.common_data_columns = {self.common_data_columns} project_id={self.project_id}')
+        logger.info(f'update summary.all_data_columns project_id={self.project_id} {self.all_data_columns=}')
+        logger.info(f'update summary.common_data_columns project_id={self.project_id} {self.common_data_columns=}')
         self.save(update_fields=['all_data_columns', 'common_data_columns'])
 
     def remove_data_columns(self, tasks):
@@ -1218,8 +1238,8 @@ class ProjectSummary(models.Model):
                 if key in common_data_columns:
                     common_data_columns.remove(key)
             self.common_data_columns = common_data_columns
-        logger.info(f'remove summary.all_data_columns = {self.all_data_columns} project_id={self.project_id}')
-        logger.info(f'remove summary.common_data_columns = {self.common_data_columns} project_id={self.project_id}')
+        logger.info(f'remove summary.all_data_columns project_id={self.project_id} {self.all_data_columns=}')
+        logger.info(f'remove summary.common_data_columns project_id={self.project_id} {self.common_data_columns=}')
         self.save(
             update_fields=[
                 'all_data_columns',
