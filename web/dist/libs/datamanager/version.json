@@ -1,6 +1,6 @@
 {
-  "message": "chore: LEAP-1293: Remove fflag_feat_back_lsdv_5035_use_created_at_fro… (#7135)",
-  "commit": "5a180200585ac61e43e3e9b3aa19ed5512783bfc",
-  "date": "2025-02-27T14:35:14.000Z",
+  "message": "fix: DIA-2022: UI&UX | Issue with zoom functionality in Label Studio labelling UI (#7182)",
+  "commit": "f59505dbbe1b9f4eb7433a872f6f354fbc8b1f43",
+  "date": "2025-03-07T18:30:10.000Z",
   "branch": "develop"
 }
